@@ -7,6 +7,7 @@ class LearningAgent(Agent):
     """An agent that learns to drive in the smartcab world."""
 
     def __init__(self, env):
+        
         super(LearningAgent, self).__init__(env)  # sets self.env = env, state = None, next_waypoint = None, and a default color
         self.color = 'red'  # override color
         self.planner = RoutePlanner(self.env, self)  # simple route planner to get next_waypoint
@@ -19,6 +20,7 @@ class LearningAgent(Agent):
         self.valid_actions = [None, 'forward', 'left', 'right']
 
     def reset(self, destination=None):
+        
         self.planner.route_to(destination)
         # TODO: Prepare for a new trip; reset any variables here, if required
 
@@ -42,6 +44,7 @@ class LearningAgent(Agent):
         #print "LearningAgent.update(): deadline = {}, inputs = {}, action = {}, reward = {}".format(deadline, inputs, action, reward)  # [debug]
 
     def build_state(self, inputs):
+        
       return {
         "light": inputs["light"],
         "oncoming": inputs["oncoming"],
@@ -50,45 +53,58 @@ class LearningAgent(Agent):
       }
 
     def choose_action_from_policy(self, state):
+        
         if random.random() < self.exploration_rate:
             self.exploration_rate -= self.exploration_degradation_rate
             return random.choice(self.valid_actions)
+        
         best_action = self.valid_actions[0]
         best_value = 0
+        
         for action in self.valid_actions:
-            cur_value = self.q_value_for(state, action)
-            if cur_value > best_value:
+            current_value = self.q_value_for(state, action)
+            if current_value > best_value:
                 best_action = action
-                best_value = cur_value
-            elif cur_value == best_value:
+                best_value = current_value
+            elif current_value == best_value:
                 best_action = random.choice([best_action, action])
+                
         return best_action
 
     def max_q_value(self, state):
+        
         max_value = None
+        
         for action in self.valid_actions:
-            cur_value = self.q_value_for(state, action)
-            if max_value is None or cur_value > max_value:
-                max_value = cur_value
+            current_value = self.q_value_for(state, action)
+            if max_value is None or current_value > max_value:
+                max_value = current_value
+                
         return max_value
 
     def q_value_for(self, state, action):
+        
         q_key = self.q_key_for(state, action)
         if q_key in self.q_values:
             return self.q_values[q_key]
+        
         return 0
 
     def update_q_value(self, state, action, reward):
+        
         q_key = self.q_key_for(state, action)
-        cur_value = self.q_value_for(state, action)
+        current_value = self.q_value_for(state, action)
         inputs = self.env.sense(self)
+        
         self.next_waypoint = self.planner.next_waypoint()
         new_state = self.build_state(inputs)
+        
         learned_value = reward + (self.discount_rate * self.max_q_value(new_state))
-        new_q_value = cur_value + (self.learning_rate * (learned_value - cur_value))
+        new_q_value = current_value + (self.learning_rate * (learned_value - current_value))
         self.q_values[q_key] = new_q_value
 
     def q_key_for(self, state, action):
+        
         return "{}|{}|{}|{}|{}".format(state["light"], state["direction"], state["oncoming"], state["left"], action)
 
 
